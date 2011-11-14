@@ -5,6 +5,8 @@ class MemcacheSASL
     protected $_request_format = 'CCnCCnNNNN';
     protected $_response_format = 'Cmagic/Copcode/nkeylength/Cextralength/Cdatatype/nstatus/Nbodylength/NOpaque/NCAS1/NCAS2';
 
+    const OPT_COMPRESSION = -1001;
+
     protected function _build_request($data)
     {
         $valuelength = $extralength = $keylength = 0;
@@ -116,16 +118,25 @@ class MemcacheSASL
                     'opcode' => 0x00,
                     'key' => $key,
                     ));
-        $data = $this->_recv();
-        if (0 == $data['status']) {
-            return $data['body'];
+	$data = $this->_recv();
+	if (0 == $data['status']) {
+	    if (16 == $data['extra']) {
+		return gzuncompress($data['body']);
+	    } else {
+		return $data['body'];
+	    }
         }
         return FALSE;
     }
 
     public function add($key, $value, $expiration = 0)
     {
-        $extra = pack('NN', 0, $expiration);
+	$flag = 0;
+	if ($this->_options[self::OPT_COMPRESSION]) {
+	    $flag = 16;
+	    $value = gzcompress($value);
+	}
+        $extra = pack('NN', $flag, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x02,
                     'key' => $key,
@@ -142,7 +153,12 @@ class MemcacheSASL
 
     public function set($key, $value, $expiration = 0)
     {
-        $extra = pack('NN', 0, $expiration);
+	$flag = 0;
+	if ($this->_options[self::OPT_COMPRESSION]) {
+	    $flag = 16;
+	    $value = gzcompress($value);
+	}
+        $extra = pack('NN', $flag, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x01,
                     'key' => $key,
@@ -174,7 +190,12 @@ class MemcacheSASL
 
     public function replace($key, $value, $time = 0)
     {
-        $extra = pack('NN', 0, $expiration);
+	$flag = 0;
+	if ($this->_options[self::OPT_COMPRESSION]) {
+	    $flag = 16;
+	    $value = gzcompress($value);
+	}
+        $extra = pack('NN', $flag, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x03,
                     'key' => $key,
@@ -246,7 +267,10 @@ class MemcacheSASL
     }
 
 
+    protected $_options = array();
+
     public function setOption($key, $value)
     {
+	$this->_options[$key] = $value;
     }
 }
