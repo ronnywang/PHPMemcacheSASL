@@ -73,8 +73,10 @@ class MemcacheSASL
 		$data .= $recv_data;
 	    }
 
-	    $extra_unpacked = unpack('Nint', substr($data, 0, $array['extralength']));
-	    $array['extra'] = $extra_unpacked['int'];
+	    if ($array['extralength']) {
+		$extra_unpacked = unpack('Nint', substr($data, 0, $array['extralength']));
+		$array['extra'] = $extra_unpacked['int'];
+	    }
 	    $array['key'] = substr($data, $array['extralength'], $array['keylength']);
 	    $array['body'] = substr($data, $array['extralength'] + $array['keylength']);
 	}
