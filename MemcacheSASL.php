@@ -3,7 +3,7 @@
 class MemcacheSASL
 {
     protected $_request_format = 'CCnCCnNNNN';
-    protected $_response_format = 'Ch_magic/Ch_opcode/nkeylength/Ch_extralength/Ch_datatype/nstatus/Nbodylength/NOpaque/NCAS1/NCAS2';
+    protected $_response_format = 'Cmagic/Copcode/nkeylength/Cextralength/Cdatatype/nstatus/Nbodylength/NOpaque/NCAS1/NCAS2';
 
     protected function _build_request($data)
     {
