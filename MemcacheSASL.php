@@ -62,10 +62,20 @@ class MemcacheSASL
     {
         $data = fread($this->_fp, 24);
         $array = $this->_show_request($data);
-        if ($array['bodylength']) {
-            $data = fread($this->_fp, $array['bodylength']);
-        }
-        $array['body'] = $data;
+	if ($array['bodylength']) {
+	    $bodylength = $array['bodylength'];
+	    $data = '';
+	    while ($bodylength > 0) {
+		$recv_data = fread($this->_fp, $bodylength);
+		$bodylength -= strlen($recv_data);
+		$data .= $recv_data;
+	    }
+
+	    $extra_unpacked = unpack('Nint', substr($data, 0, $array['extralength']));
+	    $array['extra'] = $extra_unpacked['int'];
+	    $array['key'] = substr($data, $array['extralength'], $array['keylength']);
+	    $array['body'] = substr($data, $array['extralength'] + $array['keylength']);
+	}
         return $array;
     }
 
