@@ -175,9 +175,8 @@ class MemcacheSASL
         return FALSE;
     }
 
-    public function delete($key, $time = 0)
+    public function delete($key)
     {
-        $extra = pack('NN', 0, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x04,
                     'key' => $key,
@@ -190,7 +189,7 @@ class MemcacheSASL
         return FALSE;
     }
 
-    public function replace($key, $value, $time = 0)
+    public function replace($key, $value, $expiration = 0)
     {
 	$flag = 0;
 	if ($this->_options[self::OPT_COMPRESSION]) {
