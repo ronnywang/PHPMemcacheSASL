@@ -156,7 +156,7 @@ class MemcacheSASL
     public function set($key, $value, $expiration = 0)
     {
 	$flag = 0;
-	if ($this->_options[self::OPT_COMPRESSION]) {
+	if (isset($this->_options[self::OPT_COMPRESSION]) && $this->_options[self::OPT_COMPRESSION]) {
 	    $flag = 16;
 	    $value = gzcompress($value);
 	}
