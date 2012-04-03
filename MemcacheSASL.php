@@ -25,12 +25,12 @@ class MemcacheSASL
                 $data['opcode'], 
                 $keylength,
                 $extralength,
-                $data['datatype'], 
-                $data['status'], 
+                isset($data['datatype']) ? $data['datatype'] : null,
+                isset($data['status']) ? $data['status'] : null,
                 $bodylength, 
-                $data['Opaque'], 
-                $data['CAS1'], 
-                $data['CAS2']
+                isset($data['Opaque']) ? $data['Opaque'] : null,
+                isset($data['CAS1']) ? $data['CAS1'] : null,
+                isset($data['CAS2']) ? $data['CAS2'] : null
         );
 
         if (isset($data['extra'])) {
