@@ -25,12 +25,12 @@ class MemcacheSASL
                 $data['opcode'], 
                 $keylength,
                 $extralength,
-                $data['datatype'], 
-                $data['status'], 
+                isset($data['datatype']) ? $data['datatype'] : null,
+                isset($data['status']) ? $data['status'] : null,
                 $bodylength, 
-                $data['Opaque'], 
-                $data['CAS1'], 
-                $data['CAS2']
+                isset($data['Opaque']) ? $data['Opaque'] : null,
+                isset($data['CAS1']) ? $data['CAS1'] : null,
+                isset($data['CAS2']) ? $data['CAS2'] : null
         );
 
         if (isset($data['extra'])) {
@@ -156,7 +156,7 @@ class MemcacheSASL
     public function set($key, $value, $expiration = 0)
     {
 	$flag = 0;
-	if ($this->_options[self::OPT_COMPRESSION]) {
+	if (isset($this->_options[self::OPT_COMPRESSION]) && $this->_options[self::OPT_COMPRESSION]) {
 	    $flag = 16;
 	    $value = gzcompress($value);
 	}
@@ -175,9 +175,8 @@ class MemcacheSASL
         return FALSE;
     }
 
-    public function delete($key, $time = 0)
+    public function delete($key)
     {
-        $extra = pack('NN', 0, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x04,
                     'key' => $key,
@@ -190,7 +189,7 @@ class MemcacheSASL
         return FALSE;
     }
 
-    public function replace($key, $value, $time = 0)
+    public function replace($key, $value, $expiration = 0)
     {
 	$flag = 0;
 	if ($this->_options[self::OPT_COMPRESSION]) {
