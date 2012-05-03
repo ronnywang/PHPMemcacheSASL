@@ -10,13 +10,13 @@ class MemcacheSASL
     protected function _build_request($data)
     {
         $valuelength = $extralength = $keylength = 0;
-        if (isset($data['extra'])) {
+        if (array_key_exists('extra', $data)) {
             $extralength = strlen($data['extra']);
         }
-        if (isset($data['key'])) {
+        if (array_key_exists('key', $data)) {
             $keylength = strlen($data['key']);
         }
-        if (isset($data['value'])) {
+        if (array_key_exists('value', $data)) {
             $valuelength = strlen($data['value']);
         }
         $bodylength = $extralength + $keylength + $valuelength;
@@ -25,23 +25,23 @@ class MemcacheSASL
                 $data['opcode'], 
                 $keylength,
                 $extralength,
-                isset($data['datatype']) ? $data['datatype'] : null,
-                isset($data['status']) ? $data['status'] : null,
+                array_key_exists('datatype', $data) ? $data['datatype'] : null,
+                array_key_exists('status', $data) ? $data['status'] : null,
                 $bodylength, 
-                isset($data['Opaque']) ? $data['Opaque'] : null,
-                isset($data['CAS1']) ? $data['CAS1'] : null,
-                isset($data['CAS2']) ? $data['CAS2'] : null
-        );
+                array_key_exists('Opaque', $data) ? $data['Opaque'] : null,
+                array_key_exists('CAS1', $data) ? $data['CAS1'] : null,
+                array_key_exists('CAS2', $data) ? $data['CAS2'] : null
+            );
 
-        if (isset($data['extra'])) {
+        if (array_key_exists('extra', $data)) {
             $ret .= $data['extra'];
         }
 
-        if (isset($data['key'])) {
+        if (array_key_exists('key', $data)) {
             $ret .= $data['key'];
         }
 
-        if (isset($data['value'])) {
+        if (array_key_exists('value', $data)) {
             $ret .= $data['value'];
         }
         return $ret;
@@ -156,7 +156,7 @@ class MemcacheSASL
     public function set($key, $value, $expiration = 0)
     {
 	$flag = 0;
-	if (isset($this->_options[self::OPT_COMPRESSION]) && $this->_options[self::OPT_COMPRESSION]) {
+        if (array_key_exists(self::OPT_COMPRESSION, $this->_options) && $this->_options[self::OPT_COMPRESSION]) {
 	    $flag = 16;
 	    $value = gzcompress($value);
 	}
