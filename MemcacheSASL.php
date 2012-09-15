@@ -7,6 +7,15 @@ class MemcacheSASL
 
     const OPT_COMPRESSION = -1001;
 
+    const MEMC_VAL_TYPE_MASK = 0xf;
+    const MEMC_VAL_IS_STRING = 0;
+    const MEMC_VAL_IS_LONG = 1;
+    const MEMC_VAL_IS_DOUBLE = 2;
+    const MEMC_VAL_IS_BOOL = 3;
+    const MEMC_VAL_IS_SERIALIZED = 4;
+
+    const MEMC_VAL_COMPRESSED = 16; // 2^4
+
     protected function _build_request($data)
     {
         $valuelength = $extralength = $keylength = 0;
@@ -122,22 +131,75 @@ class MemcacheSASL
                     ));
 	$data = $this->_recv();
 	if (0 == $data['status']) {
-	    if (16 == $data['extra']) {
-		return gzuncompress($data['body']);
-	    } else {
-		return $data['body'];
-	    }
+            if ($data['extra'] & self::MEMC_VAL_COMPRESSED) {
+                $body = gzuncompress($data['body']);
+            } else {
+                $body = $data['body'];
+            }
+
+            $type = $data['extra'] & self::MEMC_VAL_TYPE_MASK;
+
+            switch ($type) {
+            case self::MEMC_VAL_IS_STRING:
+                $body = strval($body);
+                break;
+
+            case self::MEMC_VAL_IS_LONG:
+                $body = intval($body);
+                break;
+
+            case self::MEMC_VAL_IS_DOUBLE:
+                $body = doubleval($body);
+                break;
+
+            case self::MEMC_VAL_IS_BOOL:
+                $body = $body ? true : false;
+                break;
+
+            case self::MEMC_VAL_IS_SERIALIZED:
+                $body = unserialize($body);
+                break;
+            }
+
+            return $body;
         }
         return FALSE;
     }
 
+    /**
+     * process value and get flag
+     * 
+     * @param int $flag
+     * @param mixed $value 
+     * @access protected
+     * @return array($flag, $processed_value)
+     */
+    protected function _processValue($flag, $value)
+    {
+        if (is_string($value)) {
+            $flag |= self::MEMC_VAL_IS_STRING;
+        } elseif (is_long($value)) {
+            $flag |= self::MEMC_VAL_IS_LONG;
+        } elseif (is_double($value)) {
+            $flag |= self::MEMC_VAL_IS_DOUBLE;
+        } elseif (is_bool($value)) {
+            $flag |= self::MEMC_VAL_IS_BOOL;
+        } else {
+            $value = serialize($value);
+            $flag |= self::MEMC_VAL_IS_SERIALIZED;
+        }
+
+        if (array_key_exists(self::OPT_COMPRESSION, $this->_options) and $this->_options[self::OPT_COMPRESSION]) {
+            $flag |= self::MEMC_VAL_COMPRESSED;
+	    $value = gzcompress($value);
+        }
+        return array($flag, $value);
+    }
+
     public function add($key, $value, $expiration = 0)
     {
-	$flag = 0;
-        if (array_key_exists(self::OPT_COMPRESSION, $this->_options) and $this->_options[self::OPT_COMPRESSION]) {
-	    $flag = 16;
-	    $value = gzcompress($value);
-	}
+        list($flag, $value) = $this->_processValue(0, $value);
+
         $extra = pack('NN', $flag, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x02,
@@ -155,11 +217,8 @@ class MemcacheSASL
 
     public function set($key, $value, $expiration = 0)
     {
-	$flag = 0;
-        if (array_key_exists(self::OPT_COMPRESSION, $this->_options) and $this->_options[self::OPT_COMPRESSION]) {
-	    $flag = 16;
-	    $value = gzcompress($value);
-	}
+        list($flag, $value) = $this->_processValue(0, $value);
+
         $extra = pack('NN', $flag, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x01,
@@ -191,11 +250,8 @@ class MemcacheSASL
 
     public function replace($key, $value, $expiration = 0)
     {
-	$flag = 0;
-        if (array_key_exists(self::OPT_COMPRESSION, $this->_options) and $this->_options[self::OPT_COMPRESSION]) {
-	    $flag = 16;
-	    $value = gzcompress($value);
-	}
+        list($flag, $value) = $this->_processValue(0, $value);
+
         $extra = pack('NN', $flag, $expiration);
         $sent = $this->_send(array(
                     'opcode' => 0x03,
