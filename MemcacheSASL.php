@@ -311,6 +311,40 @@ class MemcacheSASL
         return FALSE;
     }
 
+    /**
+     * Get statistics of the server
+     *
+     * @param string $type The type of statistics to fetch. Valid values are 
+     *                     {reset, malloc, maps, cachedump, slabs, items,
+     *                     sizes}. According to the memcached protocol spec
+     *                     these additional arguments "are subject to change
+     *                     for the convenience of memcache developers".
+     *
+     * @link http://code.google.com/p/memcached/wiki/BinaryProtocolRevamped#Stat
+     * @access public
+     * @return array  Returns an associative array of server statistics or
+     *                FALSE on failure. 
+     */
+    public function getStats($type = null)
+    {
+        $this->_send(
+            array(
+                'opcode' => 0x10,
+                'key' => $type,
+            )
+        );
+
+        $ret = array();
+        while (true) {
+            $item = $this->_recv();
+            if (empty($item['key'])) {
+                break;
+            }
+            $ret[$item['key']] = $item['body'];
+        }
+        return $ret;
+    }
+
     public function append()
     {
     }
