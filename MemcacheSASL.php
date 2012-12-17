@@ -379,8 +379,20 @@ class MemcacheSASL
         return FALSE;
     }
 
-    public function getMulti()
+    public function getMulti(array $keys)
     {
+        // TODO: from http://code.google.com/p/memcached/wiki/BinaryProtocolRevamped#Get,_Get_Quietly,_Get_Key,_Get_Key_Quietly
+        //       Clients should implement multi-get (still important for reducing network roundtrips!) as n pipelined requests ...
+        $list = array();
+
+        foreach ($keys as $key) {
+            $value = $this->get($key);
+            if (false !== $value) {
+                $list[$key] = $value;
+            }
+        }
+
+        return $list;
     }
 
 
