@@ -345,12 +345,38 @@ class MemcacheSASL
         return $ret;
     }
 
-    public function append()
+    public function append($key, $value)
     {
+        // TODO: If the Memcached::OPT_COMPRESSION is enabled, the operation
+        // should failed.
+        $sent = $this->_send(array(
+                    'opcode' => 0x0e,
+                    'key' => $key,
+                    'value' => $value,
+                    ));
+        $data = $this->_recv();
+        if ($data['status'] == 0) {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
-    public function prepend()
+    public function prepend($key, $value)
     {
+        // TODO: If the Memcached::OPT_COMPRESSION is enabled, the operation
+        // should failed.
+        $sent = $this->_send(array(
+                    'opcode' => 0x0f,
+                    'key' => $key,
+                    'value' => $value,
+                    ));
+        $data = $this->_recv();
+        if ($data['status'] == 0) {
+            return TRUE;
+        }
+
+        return FALSE;
     }
 
     public function getMulti()
