@@ -402,4 +402,39 @@ class MemcacheSASL
     {
 	$this->_options[$key] = $value;
     }
+
+    /**
+     * Set the memcache object to be a session handler
+     *
+     * Ex:
+     * $m = new MemcacheSASL;
+     * $m->addServer('xxx', 11211);
+     * $m->setSaslAuthData('user', 'password');
+     * $m->setSaveHandler();
+     * session_start();
+     * $_SESSION['hello'] = 'world';
+     *
+     * @access public
+     * @return void
+     */
+    public function setSaveHandler()
+    {
+        session_set_save_handler(
+            function($savePath, $sessionName){ // open
+            },
+            function(){ // close
+            },
+            function($sessionId){ // read
+                return $this->get($sessionId);
+            },
+            function($sessionId, $data){ // write
+                return $this->set($sessionId, $data);
+            },
+            function($sessionId){ // destroy
+                $this->delete($sessionId);
+            },
+            function($lifetime) { // gc
+            }
+        );
+    }
 }
