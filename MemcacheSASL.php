@@ -123,6 +123,28 @@ class MemcacheSASL
         $this->_fp = stream_socket_client($host . ':' . $port);
     }
 
+    public function addServers($servers)
+    {
+      for ($i = 0; $i < count($servers); $i++) {
+        $s = $servers[$i];
+        if (count($s) >= 2) {
+          $this->addServer($s[0], $s[1]);
+        } else {
+          trigger_error("could not add entry #"
+            .($i+1)." to the server list", E_USER_WARNING);
+        }
+      }
+    }
+
+    public function addServersByString($servers)
+    {
+        $servers = explode(",", $servers);
+        for ($i = 0; $i < count($servers); $i++) {
+            $servers[$i] = explode(":", $servers[$i]);
+        }
+        $this->addServers($servers);
+    }
+
     public function get($key)
     {   
         $sent = $this->_send(array(
